@@ -1,12 +1,4 @@
-require "colorize"
 require_relative "tile"
-
-COLORS = {
-            1 => "1".blue,
-            2 => "2".green,
-            3 => "3".red,
-            4 => "4".light_blue,
-          }
 
 DELTA = [[0,1],[0,-1],[1,1],[1,0],[1,-1],[-1,0],[-1,-1],[-1,1]]
 
@@ -39,8 +31,8 @@ class Board
     total_bombs = 0
     while total_bombs < @num_bombs
       rand_pos = Array.new(2) { rand(size) }
-      if !self[rand_pos].value != "bomb"
-        self[rand_pos].value = "bomb"
+      if !self[rand_pos].value != "☢"
+        self[rand_pos].value = "☢"
         self[rand_pos].bomb = true
         total_bombs += 1
       end
@@ -65,21 +57,22 @@ class Board
     end
     n
   end
-
-
-
   def check_surrounding_bombs(pos)
-    return "gameover!" if self[pos].value == "bomb" 
+    return "gameover!" if self[pos].value == "☢" 
 
     if valid?(pos)
       count = 0
         DELTA.each do |d|
           neighbor_pos = [(pos[0] + d[0]), (pos[1] + d[1])]
-          if valid?(neighbor_pos) && self[neighbor_pos].value == 'bomb'
+          if valid?(neighbor_pos) && self[neighbor_pos].value == '☢'
             count +=1
           end
         end
-      self[pos].value = count.to_s
+      if count == 0
+        self[pos].value = " "
+      else
+        self[pos].value = count.to_s
+      end
       self[pos].revealed = true
     count
 
@@ -113,11 +106,14 @@ class Board
   end
 
   def choose(pos)
-    raise ArgumentError, "Position not valid!" unless valid?(pos)
-    if self[pos].bomb? 
-      @gameover = true
+    if !valid?(pos)
+      puts 'please enter valid position'
     else
-      flood_fill(pos)
+      if self[pos].bomb? 
+        @gameover = true
+      else
+        flood_fill(pos)
+      end
     end
   end
 
@@ -136,15 +132,15 @@ class Board
     count == size*size - num_bombs
   end
 
-
-
+  def reveal
+    grid.each do |rows|
+      rows.each do |tile|
+        if tile.value == nil
+          check_surrounding_bombs(tile.pos)
+        end
+        tile.revealed = true
+          end
+      end
+    end
 end
 
-
-
-if $PROGRAM_NAME == __FILE__
-  b = Board.new(4, 2)
-  b.choose([1,1])
-  puts b
-
-end
