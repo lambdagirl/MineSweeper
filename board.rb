@@ -20,6 +20,7 @@ class Board
     @grid = Array.new(size) do |row|
       Array.new(size) { |col| Tile.new(self, [row, col]) }
     end
+    @gameover = false
     generate_bombs
   end
   
@@ -40,6 +41,7 @@ class Board
       rand_pos = Array.new(2) { rand(size) }
       if !self[rand_pos].value != "bomb"
         self[rand_pos].value = "bomb"
+        self[rand_pos].bomb = true
         total_bombs += 1
       end
       end
@@ -52,9 +54,6 @@ class Board
     end
   end
 
-  def set_nums
-
-  end
 
   def get_neighbors(pos)
     n = []
@@ -100,7 +99,6 @@ class Board
     q << pos
     while q.length > 0
       current_pos = q.shift
-      p current_pos
       if check_surrounding_bombs(current_pos) == 0
         neighbors = get_neighbors(current_pos)
         neighbors.each do |n|
@@ -111,26 +109,42 @@ class Board
       self[current_pos].revealed = true 
       end
     end
-    grid
+    pos
   end
 
   def choose(pos)
-    if valid?(pos)
-      if b[pos].bomb? 
-        return "gameover!"
-      else
-        check_surrounding_bombs(pos)
-      end
+    raise ArgumentError, "Position not valid!" unless valid?(pos)
+    if self[pos].bomb? 
+      @gameover = true
+    else
+      flood_fill(pos)
     end
   end
+
+  def gameover?
+    @gameover
+  end
+
+  def won?
+    count = 0
+    grid.each do |rows|
+      rows.each do |tile|
+          tile.revealed?
+          count+=1
+      end
+    end
+    count == size*size - num_bombs
+  end
+
+
+
 end
 
 
 
 if $PROGRAM_NAME == __FILE__
   b = Board.new(4, 2)
-  b.check_surrounding_bombs([1,1])
+  b.choose([1,1])
   puts b
 
-  require 'pry'; binding.pry
 end
